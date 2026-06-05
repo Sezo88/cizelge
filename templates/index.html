@@ -31,13 +31,26 @@
     <!-- Header -->
     <header class="app-header">
       <h1>📊 Ders İçi Etkinlik & Proje Ölçek Uygulaması</h1>
-      <div class="user-guide" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 0.95rem; text-align: left; line-height: 1.6; border: 1px solid rgba(255,255,255,0.1);">
-        <strong>📌 KULLANIM KILAVUZU (PDF İLE OTOMATİK YÜKLEME):</strong> <br>
-        1. <b>e-Okul</b> sistemine giriş yapın.<br>
-        2. <em>"İlkokul-Ortaokul Kurum İşlemleri > Not İşlemleri > Öğretmen Puan Çizelgeleri"</em> sayfasına gidin.<br>
-        3. Puan çizelgesini <strong>PDF</strong> formatında indirip bilgisayarınıza kaydedin.<br>
-        4. Aşağıdaki <strong>"Öğrenciler"</strong> sekmesine geçin, <em>"Toplu e-Okul PDF Yükle"</em> seçeneğine tıklayın ve indirdiğiniz dosyayı yükleyin.<br>
-        ✅ <em>Sistem; okul adını, dersi, öğretmeni, idareciyi, sınıfları ve tüm öğrenci notlarını tek seferde otomatik tanıyacaktır!</em>
+      <div class="user-guide-container" style="display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap;">
+        <!-- PDF Guide -->
+        <div class="user-guide" style="flex: 1; min-width: 300px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9rem; text-align: left; line-height: 1.6; border: 1px solid rgba(255,255,255,0.1);">
+          <strong style="color: var(--accent-primary);">📄 PDF İLE OTOMATİK YÜKLEME:</strong> <br>
+          1. <b>e-Okul</b> sistemine giriş yapın.<br>
+          2. <em>"İlkokul-Ortaokul Kurum İşlemleri > Not İşlemleri > Rapor Al > 5,6,7,8 genel dersler Öğretmen Puan Çizelgeleri"</em> sayfasına gidin.<br>
+          3. Seçtiğiniz çizelgeyi (Ders İçi Etkinlik veya Proje Ödevi) <strong>PDF</strong> formatında bilgisayarınıza indirin.<br>
+          4. <strong>"Öğrenciler"</strong> sekmesinde <em>"Toplu e-Okul PDF Yükle"</em> ile dosyayı yükleyin.<br>
+          ✅ <em>Okul, öğretmen, sınıflar ve (proje/ders içi) notlar otomatik tanınır!</em>
+        </div>
+        
+        <!-- Manual Guide -->
+        <div class="user-guide" style="flex: 1; min-width: 300px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9rem; text-align: left; line-height: 1.6; border: 1px solid rgba(255,255,255,0.1);">
+          <strong style="color: var(--accent-warning);">📝 MANUEL (KOPYALA/YAPIŞTIR):</strong> <br>
+          1. <b>e-Okul</b> sisteminde <em>"Hızlı Ders Notu Girişi"</em> ekranını açın.<br>
+          2. Listeyi (numara, ad, soyad ve notların bulunduğu tabloyu) tamamen seçip kopyalayın.<br>
+          3. <strong>"Öğrenciler"</strong> sekmesindeki <em>"Manuel (Kopyala/Yapıştır)"</em> alanına sağ tıklayıp yapıştırın.<br>
+          4. <em>"Öğrencileri Ekle + Notları Dağıt"</em> butonuna basın.<br>
+          ✅ <em>Sistem metni çözümler ve etkinlik/proje notlarını anında dağıtır.</em>
+        </div>
       </div>
       <div style="margin-top: 15px; font-weight: bold; color: var(--accent-primary); font-size: 1rem; text-shadow: 0px 2px 4px rgba(0,0,0,0.2);">
         Geliştiren: SEZAİ KAYA
