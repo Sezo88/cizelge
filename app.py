@@ -11,7 +11,10 @@ import glob
 from datetime import datetime
 
 app = Flask(__name__)
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+if os.environ.get('VERCEL'):
+    DATA_DIR = '/tmp/data'
+else:
+    DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
 
 
