@@ -362,7 +362,7 @@ function distributeScores(targetPuan, totalOlcut) {
     return new Array(totalOlcut).fill(1);
   }
 
-  const maxScore = state.olcekTipi === 'proje' ? 10 : 4;
+  const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
   const maxTotal = totalOlcut * maxScore;
   const minTotal = totalOlcut * 1;
 
@@ -558,17 +558,14 @@ function renderOlcekTable() {
   }
   pageSelector += `</div>`;
 
-  const maxScore = state.olcekTipi === 'proje' ? 10 : 4;
+  const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
   const quickFillArray = Array.from({length: maxScore}, (_, i) => i + 1);
   const legendHtml = state.olcekTipi === 'proje' 
     ? `<div class="score-legend">
          <div class="score-legend-item" style="font-weight: 500; color: var(--accent-primary);">📌 Proje değerlendirmesi her hücre için 10 puan üzerinden yapılır. Toplam 10 kriter vardır.</div>
        </div>`
     : `<div class="score-legend">
-         <div class="score-legend-item"><span class="score-legend-dot s1"></span> 1 - Zayıf</div>
-         <div class="score-legend-item"><span class="score-legend-dot s2"></span> 2 - Kabul Edilebilir</div>
-         <div class="score-legend-item"><span class="score-legend-dot s3"></span> 3 - Orta</div>
-         <div class="score-legend-item"><span class="score-legend-dot s4"></span> 4 - İyi</div>
+         <div class="score-legend-item" style="font-weight: 500; color: var(--accent-primary);">📌 Ders içi katılım her hücre için 5 puan üzerinden değerlendirilir. Toplam 20 kriter vardır.</div>
        </div>`;
 
   let html = `
@@ -653,7 +650,7 @@ function renderOlcekTable() {
       });
     });
 
-    const maxScore = state.olcekTipi === 'proje' ? 10 : 4;
+    const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
     const maxPuan = totalOlcutler * maxScore;
     const yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
 
@@ -709,7 +706,7 @@ function handleScoreClick(cell) {
     cell.dataset.score = state.quickFillScore;
     updateRowTotal(ogrIdx);
   } else {
-    const maxScore = state.olcekTipi === 'proje' ? 10 : 4;
+    const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
     const current = parseInt(cell.dataset.score) || 0;
     const next = current >= maxScore ? 0 : current + 1;
 
@@ -738,7 +735,7 @@ function updateRowTotal(ogrIdx) {
     totalFilled++;
   });
 
-  const maxScore = state.olcekTipi === 'proje' ? 10 : 4;
+  const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
   const maxPuan = totalOlcutler * maxScore;
   const yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
 
@@ -872,7 +869,7 @@ function buildPdfPageHtml(olcekNo, puanlarData) {
       });
     });
 
-    const maxScore = state.olcekTipi === 'proje' ? 10 : 4;
+    const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
     const maxPuan = totalOlcutler * maxScore;
     const yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
     html += `<td style="font-weight:700">${yuzde}</td></tr>`;
