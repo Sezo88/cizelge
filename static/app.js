@@ -73,8 +73,7 @@ const OLCUTLER = {
           'Gösterilen özen, temizlik, tertip ve düzen.',
           'Bilgilerin doğruluğu.',
           'Toplanan bilgileri düzenleme.',
-          'Toplanan bilgileri analiz etme.',
-          'Elde edilen bilgilerden çıkarımda bulunma.'
+          'Toplanan bilgileri analiz etme.'
         ]
       }
     ]
@@ -363,7 +362,8 @@ function distributeScores(targetPuan, totalOlcut) {
     return new Array(totalOlcut).fill(1);
   }
 
-  const maxTotal = totalOlcut * 4;
+  const maxScore = state.olcekTipi === 'proje' ? 10 : 4;
+  const maxTotal = totalOlcut * maxScore;
   const minTotal = totalOlcut * 1;
 
   let targetTotal = Math.round((targetPuan / 100) * maxTotal);
@@ -371,11 +371,11 @@ function distributeScores(targetPuan, totalOlcut) {
 
   const baseScore = Math.floor(targetTotal / totalOlcut);
   const remainder = targetTotal - (baseScore * totalOlcut);
-  const base = Math.max(1, Math.min(4, baseScore));
+  const base = Math.max(1, Math.min(maxScore, baseScore));
 
   const scores = [];
   for (let i = 0; i < totalOlcut; i++) {
-    if (i < remainder && base < 4) {
+    if (i < remainder && base < maxScore) {
       scores.push(base + 1);
     } else {
       scores.push(base);
@@ -558,12 +558,25 @@ function renderOlcekTable() {
   }
   pageSelector += `</div>`;
 
+  const maxScore = state.olcekTipi === 'proje' ? 10 : 4;
+  const quickFillArray = Array.from({length: maxScore}, (_, i) => i + 1);
+  const legendHtml = state.olcekTipi === 'proje' 
+    ? `<div class="score-legend">
+         <div class="score-legend-item" style="font-weight: 500; color: var(--accent-primary);">📌 Proje değerlendirmesi her hücre için 10 puan üzerinden yapılır. Toplam 10 kriter vardır.</div>
+       </div>`
+    : `<div class="score-legend">
+         <div class="score-legend-item"><span class="score-legend-dot s1"></span> 1 - Zayıf</div>
+         <div class="score-legend-item"><span class="score-legend-dot s2"></span> 2 - Kabul Edilebilir</div>
+         <div class="score-legend-item"><span class="score-legend-dot s3"></span> 3 - Orta</div>
+         <div class="score-legend-item"><span class="score-legend-dot s4"></span> 4 - İyi</div>
+       </div>`;
+
   let html = `
     ${pageSelector}
 
     <div class="quick-fill-bar">
       <label>🖊️ Hızlı Puan:</label>
-      ${[1, 2, 3, 4].map(p => `
+      ${quickFillArray.map(p => `
         <button class="quick-fill-btn ${state.quickFillScore === p ? 'active' : ''}"
                 onclick="setQuickFill(${p})">${p}</button>
       `).join('')}
@@ -573,12 +586,7 @@ function renderOlcekTable() {
       </span>
     </div>
 
-    <div class="score-legend">
-      <div class="score-legend-item"><span class="score-legend-dot s1"></span> 1 - Zayıf</div>
-      <div class="score-legend-item"><span class="score-legend-dot s2"></span> 2 - Kabul Edilebilir</div>
-      <div class="score-legend-item"><span class="score-legend-dot s3"></span> 3 - Orta</div>
-      <div class="score-legend-item"><span class="score-legend-dot s4"></span> 4 - İyi</div>
-    </div>
+    ${legendHtml}
 
     <div class="scale-table-wrapper">
       <table class="scale-table" id="scaleTable">
@@ -645,7 +653,8 @@ function renderOlcekTable() {
       });
     });
 
-    const maxPuan = totalOlcutler * 4;
+    const maxScore = state.olcekTipi === 'proje' ? 10 : 4;
+    const maxPuan = totalOlcutler * maxScore;
     const yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
 
     html += `<td class="score-total">${yuzde}</td></tr>`;
@@ -700,8 +709,9 @@ function handleScoreClick(cell) {
     cell.dataset.score = state.quickFillScore;
     updateRowTotal(ogrIdx);
   } else {
+    const maxScore = state.olcekTipi === 'proje' ? 10 : 4;
     const current = parseInt(cell.dataset.score) || 0;
-    const next = current >= 4 ? 0 : current + 1;
+    const next = current >= maxScore ? 0 : current + 1;
 
     state.puanlar[ogrIdx] = state.puanlar[ogrIdx] || {};
     if (next === 0) {
@@ -728,7 +738,8 @@ function updateRowTotal(ogrIdx) {
     totalFilled++;
   });
 
-  const maxPuan = totalOlcutler * 4;
+  const maxScore = state.olcekTipi === 'proje' ? 10 : 4;
+  const maxPuan = totalOlcutler * maxScore;
   const yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
 
   const rows = document.querySelectorAll('#scaleTable tbody tr');
@@ -861,7 +872,8 @@ function buildPdfPageHtml(olcekNo, puanlarData) {
       });
     });
 
-    const maxPuan = totalOlcutler * 4;
+    const maxScore = state.olcekTipi === 'proje' ? 10 : 4;
+    const maxPuan = totalOlcutler * maxScore;
     const yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
     html += `<td style="font-weight:700">${yuzde}</td></tr>`;
   });
