@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Local data / uploads
+data/*.json
+
+# Large files or user data
+*.pdf
+
+# Environment/system files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

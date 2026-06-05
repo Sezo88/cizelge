@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ders İçi Etkinlik ve Proje Değerlendirme Ölçek Uygulaması - PDF çıktı ile not ölçeği oluşturma">
+  <title>Ders İçi Etkinlik & Proje Ölçek Uygulaması</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <!-- jsPDF ve html2canvas CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script>
+    window.addEventListener('load', function() {
+      if (!window.jspdf) {
+        console.warn('jsPDF yüklenemedi, yedek CDN deneniyor...');
+        var s = document.createElement('script');
+        s.src = 'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js';
+        document.head.appendChild(s);
+      }
+      if (!window.html2canvas) {
+        console.warn('html2canvas yüklenemedi, yedek CDN deneniyor...');
+        var s2 = document.createElement('script');
+        s2.src = 'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js';
+        document.head.appendChild(s2);
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <h1>📊 Ders İçi Etkinlik & Proje Ölçek Uygulaması</h1>
+      <p>Ölçek oluşturun, puanlayın ve PDF olarak indirin — Selenium gerekmez!</p>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav-tabs" role="tablist">
+      <button class="nav-tab active" data-tab="bilgi" onclick="switchTab('bilgi')">
+        <span class="tab-icon">🏫</span> Bilgiler
+      </button>
+      <button class="nav-tab" data-tab="ogrenci" onclick="switchTab('ogrenci')">
+        <span class="tab-icon">👨‍🎓</span> Öğrenciler
+      </button>
+      <button class="nav-tab" data-tab="olcek" onclick="switchTab('olcek')">
+        <span class="tab-icon">📋</span> Ölçek Tablosu
+      </button>
+      <button class="nav-tab" data-tab="pdf" onclick="switchTab('pdf')">
+        <span class="tab-icon">📄</span> PDF Çıktı
+      </button>
+      <button class="nav-tab" data-tab="kayitlar" onclick="switchTab('kayitlar')">
+        <span class="tab-icon">💾</span> Kayıtlar
+      </button>
+    </nav>
+
+    <!-- ===== Panel: Bilgiler ===== -->
+    <div class="tab-panel active" id="panel-bilgi">
+      <div class="card">
+        <div class="card-title"><span class="icon">🏫</span> Okul & Ders Bilgileri</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Eğitim-Öğretim Yılı</label>
+            <input type="text" id="egitimYili" value="2024-2025" placeholder="2024-2025">
+          </div>
+          <div class="form-group">
+            <label>Dönem</label>
+            <select id="donem">
+              <option value="1. Dönem">1. Dönem</option>
+              <option value="2. Dönem">2. Dönem</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Okulun Adı</label>
+            <input type="text" id="okulAdi" placeholder="Örn: İhsan Çelikten Ortaokulu">
+          </div>
+          <div class="form-group">
+            <label>Dersin Adı</label>
+            <input type="text" id="dersAdi" placeholder="Örn: Bilişim Teknolojileri ve Yazılım">
+          </div>
+          <div class="form-group">
+            <label>Sınıf</label>
+            <input type="text" id="sinif" placeholder="Örn: 6. Sınıf / A Şubesi">
+          </div>
+          <div class="form-group">
+            <label>Öğretmen Adı Soyadı</label>
+            <input type="text" id="ogretmen" placeholder="Ad Soyad">
+          </div>
+          <div class="form-group">
+            <label>Öğretmen Unvanı</label>
+            <input type="text" id="ogretmenUnvan" value="Öğretmen">
+          </div>
+          <div class="form-group">
+            <label>İdareci Adı Soyadı</label>
+            <input type="text" id="idareci" placeholder="Ad Soyad">
+          </div>
+          <div class="form-group">
+            <label>İdareci Unvanı</label>
+            <input type="text" id="idareciunvan" value="Okul Müdürü">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📋</span> Ölçek Ayarları</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Ölçek Tipi</label>
+            <select id="olcekTipi">
+              <option value="dersici">Ders İçi Katılım Ölçeği</option>
+              <option value="proje">Proje Değerlendirme Ölçeği</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Aktif Ölçek No</label>
+            <select id="olcekNo">
+              <option value="1">1. Ölçek</option>
+              <option value="2">2. Ölçek</option>
+              <option value="3">3. Ölçek</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Etkinlik Notu Sayısı</label>
+            <select id="etkinlikSayisi">
+              <option value="2">2 adet (1. ve 2. Ders Et. Kat.)</option>
+              <option value="3">3 adet (1., 2. ve 3. Ders Et. Kat.)</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:0.5rem; padding:0.5rem 0.8rem; background:rgba(108,92,231,0.08); border-radius:var(--radius-sm); font-size:0.78rem; color:var(--accent-primary);">
+          💡 <strong>Etkinlik Notu Sayısı:</strong> e-Okul'da kaç adet "Ders İçi Etkinlik Katılımı" notu girildiyse onu seçin.
+          Her etkinlik notu için ayrı ölçek sayfası oluşturulacaktır. PDF'de bu kadar sayfa çıkacak.
+        </div>
+        <div class="btn-group" style="margin-top:0.8rem;">
+          <button class="btn btn-secondary" onclick="openOlcutEditor()">
+            ✏️ Ölçütleri Düzenle
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Panel: Öğrenciler ===== -->
+    <div class="tab-panel" id="panel-ogrenci">
+      
+      <!-- Veri Yükleme Yöntemi Seçimi -->
+      <div class="card" style="margin-bottom: 1rem; padding-bottom: 0.5rem;">
+        <div class="card-title"><span class="icon">🔄</span> Veri Kaynağı Seçimi</div>
+        <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
+          <label style="cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-weight: 500;">
+            <input type="radio" name="veri_kaynagi" value="manuel" checked onchange="toggleVeriKaynagi()">
+            📝 Manuel (Kopyala/Yapıştır)
+          </label>
+          <label style="cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-weight: 500;">
+            <input type="radio" name="veri_kaynagi" value="pdf" onchange="toggleVeriKaynagi()">
+            📄 Toplu e-Okul PDF Yükle (Yeni)
+          </label>
+        </div>
+      </div>
+
+      <!-- Kısım 1: Manuel Giriş -->
+      <div class="card" id="veri-manuel">
+        <div class="card-title"><span class="icon">📋</span> e-Okul'dan Yapıştır</div>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+          e-Okul'dan <strong>"Hızlı Ders Notu Girişi"</strong> sayfasındaki tabloyu komple seçip kopyalayın ve aşağıya yapıştırın.<br>
+          Program <strong>1.Ders Et.Kat.</strong>, <strong>2.Ders Et.Kat.</strong> ve <strong>3.Ders Et.Kat.</strong> sütunlarını otomatik algılayıp her birine ayrı ölçek sayfası oluşturur.
+        </p>
+        <div style="display:flex; gap:1rem; margin-bottom:1rem; padding:0.6rem 1rem; background:rgba(253,203,110,0.08); border:1px solid rgba(253,203,110,0.2); border-radius:var(--radius-sm); align-items:center;">
+          <span style="font-size:1.2rem">💡</span>
+          <span style="font-size:0.8rem; color:var(--accent-warning)">
+            <strong>Nasıl çalışır:</strong> e-Okul sütunları sondan okunur → Puanı, Proje-Ders Ort., sonra Ders Et.Kat notları.
+            Her öğrencinin etkinlik notları sarı badge olarak listelenir. Ölçek sayfaları otomatik dağıtılır.
+          </span>
+        </div>
+        <div class="paste-area">
+          <div class="paste-icon">📋</div>
+          <div class="paste-text">e-Okul'dan kopyaladığınız not tablosunu buraya yapıştırın</div>
+          <textarea id="pasteArea" placeholder="76&#9;ADA GÖRAL&#9;&#10;100&#10;100&#10;100&#9;100&#9;&#9;100&#9;100&#9;Öğrenci Not Bilgisi&#10;84&#9;ALİ EREN SALMAN&#9;&#10;..."></textarea>
+        </div>
+        <div class="btn-group" style="align-items:center; flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="parseStudentPaste()">✅ Öğrencileri Ekle + Notları Dağıt</button>
+          <label class="checkbox-label" style="margin-left:0.5rem;">
+            <input type="checkbox" id="autoDistributeCheck" checked>
+            Etkinlik notlarına göre ölçeklere otomatik dağıt
+          </label>
+          <div class="file-upload" style="margin-left:auto;">
+            <button class="btn btn-secondary">📁 Excel'den İmport</button>
+            <input type="file" accept=".xlsx,.xls" onchange="importExcel(this)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Kısım 2: PDF Yükleme (Yeni) -->
+      <div class="card" id="veri-pdf" style="display: none;">
+        <div class="card-title"><span class="icon">📄</span> e-Okul PDF'inden Aktar</div>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          e-Okul "Öğretmen Puan Çizelgesi" raporunu (PDF) buraya yükleyin. Birden fazla sınıfın notlarını tek seferde okuyup listeler.
+        </p>
+        
+        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+          <input type="file" id="pdfFileInput" accept="application/pdf" style="flex:1;">
+          <button class="btn btn-primary" onclick="uploadPdf()" id="btnUploadPdf">⬆️ Yükle ve Tara</button>
+        </div>
+        
+        <div id="pdf-selection-area" style="display: none;">
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div class="form-group" style="flex: 1;">
+              <label>📂 Sınıf Seçin</label>
+              <select id="pdfSinifSelect" onchange="applyPdfSelection()"></select>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label>📅 Dönem Seçin</label>
+              <select id="pdfDonemSelect" onchange="applyPdfSelection()">
+                <option value="1">1. Dönem</option>
+                <option value="2">2. Dönem</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <button class="btn btn-success" onclick="downloadAllClassesPdf()" style="width: 100%;">
+              📥 Tüm Sınıfları Tek Tuşla İndir (Seçili Dönem İçin)
+            </button>
+            <button class="btn btn-primary" onclick="downloadAllProjectsPdf()" style="width: 100%; background-color: var(--accent-primary);">
+              📁 Sadece Proje Alan Öğrencileri İndir (Tüm Sınıflar)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">➕</span> Manuel Öğrenci Ekle</div>
+        <div class="form-grid" style="grid-template-columns: 120px 1fr auto;">
+          <div class="form-group">
+            <label>Okul No</label>
+            <input type="text" id="manualNo" placeholder="No">
+          </div>
+          <div class="form-group">
+            <label>Adı Soyadı</label>
+            <input type="text" id="manualAd" placeholder="Ad Soyad" onkeypress="if(event.key==='Enter') addStudentManual()">
+          </div>
+          <div class="form-group" style="justify-content:flex-end">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary" onclick="addStudentManual()">➕ Ekle</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span class="icon">👨‍🎓</span> Öğrenci Listesi
+          <span style="margin-left:auto; font-size:0.85rem; color:var(--accent-secondary)" id="studentCount">0</span>
+        </div>
+        <div class="student-list" id="studentList">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <p>Henüz öğrenci eklenmedi.</p>
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-danger" onclick="clearStudents()">🗑️ Tümünü Sil</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Panel: Ölçek Tablosu ===== -->
+    <div class="tab-panel" id="panel-olcek">
+      <div class="card">
+        <div class="card-title">
+          <span class="icon">📊</span> Ölçek Tablosu
+          <div style="margin-left:auto; display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button class="btn btn-success" onclick="autoDistributeAll()" style="font-size:0.75rem; padding:0.4rem 0.8rem;">🎯 e-Okul Notlarından Dağıt</button>
+            <button class="btn btn-secondary" onclick="openOlcutEditor()" style="font-size:0.75rem; padding:0.4rem 0.8rem;">✏️ Ölçütleri Düzenle</button>
+            <button class="btn btn-secondary" onclick="fillAllWithScore(4)" style="font-size:0.75rem; padding:0.4rem 0.8rem;">🟢 Boşlara 4</button>
+            <button class="btn btn-secondary" onclick="fillAllWithScore(3)" style="font-size:0.75rem; padding:0.4rem 0.8rem;">🔵 Boşlara 3</button>
+            <button class="btn btn-danger" onclick="clearAllScores()" style="font-size:0.75rem; padding:0.4rem 0.8rem;">🗑️ Temizle</button>
+          </div>
+        </div>
+        <div id="olcekContainer">
+          <div class="empty-state">
+            <div class="empty-icon">📊</div>
+            <p>Ölçek tablosu oluşturmak için önce öğrenci ekleyin.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Panel: PDF Çıktı ===== -->
+    <div class="tab-panel" id="panel-pdf">
+      <div class="card print-card">
+        <div class="card-title">
+          <span class="icon">📄</span> PDF Önizleme & Çıktı
+          <div style="margin-left:auto; display:flex; gap:0.5rem;">
+            <button class="btn btn-primary" onclick="renderPdfPreview()">🔄 Önizle</button>
+            <button class="btn btn-success" onclick="downloadPdf()">⬇️ Tüm Sayfaları PDF İndir</button>
+            <button class="btn btn-secondary" onclick="printPdf()">🖨️ Yazdır</button>
+            <button class="btn btn-secondary" onclick="saveToServer()">💾 Kaydet</button>
+          </div>
+        </div>
+        <div id="pdfContainer">
+          <div class="empty-state">
+            <div class="empty-icon">📄</div>
+            <p>PDF oluşturmak için önce öğrenci ekleyin ve puanları girin.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Panel: Kayıtlar ===== -->
+    <div class="tab-panel" id="panel-kayitlar">
+      <div class="card">
+        <div class="card-title"><span class="icon">💾</span> Kaydedilmiş Ölçekler</div>
+        <div class="record-list" id="recordList">
+          <div class="empty-state" style="grid-column: 1/-1">
+            <div class="empty-icon">💾</div>
+            <p>Henüz kaydedilmiş ölçek yok.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Fill Indicator -->
+  <div class="selected-fill-score"></div>
+
+  <!-- Toast Container -->
+  <div class="toast-container"></div>
+
+  <!-- Modal -->
+  <div class="modal-overlay">
+    <div class="modal-content"></div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
