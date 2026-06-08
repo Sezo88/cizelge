@@ -1425,21 +1425,21 @@ async function downloadAllClassesPdf() {
         
         try {
           const canvas = await html2canvas(tempDiv, { 
-            scale: 2, 
+            scale: 1.5, 
             useCORS: true,
             backgroundColor: '#ffffff',
             logging: false
           });
           
-          const imgData = canvas.toDataURL('image/png');
+          const imgData = canvas.toDataURL('image/jpeg', 0.85);
           const imgWidth = pageWidth - 20;
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
           if (imgHeight <= pageHeight - 20) {
-            jspdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+            jspdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, imgHeight);
           } else {
             const scale = (pageHeight - 20) / imgHeight;
-            jspdf.addImage(imgData, 'PNG', 10, 10, imgWidth * scale, imgHeight * scale);
+            jspdf.addImage(imgData, 'JPEG', 10, 10, imgWidth * scale, imgHeight * scale);
           }
         } catch (err) {
           console.error('Canvas error:', err);
@@ -1579,20 +1579,20 @@ async function downloadAllProjectsPdf() {
           
           try {
             const canvas = await html2canvas(tempDiv, { 
-              scale: 2, 
+              scale: 1.5, 
               useCORS: true,
               backgroundColor: '#ffffff',
               logging: false
             });
-            const imgData = canvas.toDataURL('image/png');
+            const imgData = canvas.toDataURL('image/jpeg', 0.85);
             const imgWidth = pageWidth - 20;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
             if (imgHeight <= pageHeight - 20) {
-              jspdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+              jspdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, imgHeight);
             } else {
               const scale = (pageHeight - 20) / imgHeight;
-              jspdf.addImage(imgData, 'PNG', 10, 10, imgWidth * scale, imgHeight * scale);
+              jspdf.addImage(imgData, 'JPEG', 10, 10, imgWidth * scale, imgHeight * scale);
             }
           } catch (err) {
             console.error('Canvas error:', err);
