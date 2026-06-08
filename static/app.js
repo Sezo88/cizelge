@@ -1172,10 +1172,15 @@ function openOlcutEditor() {
   });
   html += '</div>';
 
-  html += `<div class="btn-group">
+  html += `<div class="btn-group" style="margin-top: 15px; flex-wrap: wrap;">
     <button class="btn btn-primary" onclick="saveOlcutEdits()">💾 Kaydet</button>
     <button class="btn btn-secondary" onclick="closeModal()">İptal</button>
     <button class="btn btn-danger" onclick="resetOlcutler()">🔄 Varsayılana Dön</button>
+  </div>
+  <div class="btn-group" style="margin-top: 10px; flex-wrap: wrap; border-top: 1px solid var(--border-color); padding-top: 10px;">
+    <button class="btn btn-success" onclick="downloadOlcutler()">📥 Ölçütleri İndir</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('olcutUploadInput').click()">📤 Ölçüt Yükle</button>
+    <input type="file" id="olcutUploadInput" accept=".json" style="display: none;" onchange="uploadOlcutler(event)">
   </div>`;
 
   const modal = document.querySelector('.modal-content');
@@ -1197,6 +1202,58 @@ function saveOlcutEdits() {
   closeModal();
   renderOlcekTable();
   showToast('Ölçütler güncellendi', 'success');
+}
+
+function downloadOlcutler() {
+  const inputs = document.querySelectorAll('.olcut-edit-item input');
+  const olcutler = JSON.parse(JSON.stringify(getCurrentOlcutler()));
+
+  inputs.forEach(input => {
+    const katIdx = parseInt(input.dataset.kat);
+    const olcutIdx = parseInt(input.dataset.olcut);
+    olcutler.kategoriler[katIdx].olcutler[olcutIdx] = input.value;
+  });
+
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(olcutler, null, 2));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  const tip = state.olcekTipi === 'dersici' ? 'dersici' : 'proje';
+  downloadAnchorNode.setAttribute("download", `olcutler_${tip}.json`);
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+  
+  showToast('Ölçütler indirildi.', 'success');
+}
+
+function uploadOlcutler(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed.kategoriler || !Array.isArray(parsed.kategoriler)) {
+        throw new Error("Geçersiz ölçüt formatı.");
+      }
+      
+      const inputs = document.querySelectorAll('.olcut-edit-item input');
+      inputs.forEach(input => {
+        const katIdx = parseInt(input.dataset.kat);
+        const olcutIdx = parseInt(input.dataset.olcut);
+        if (parsed.kategoriler[katIdx] && parsed.kategoriler[katIdx].olcutler[olcutIdx] !== undefined) {
+          input.value = parsed.kategoriler[katIdx].olcutler[olcutIdx];
+        }
+      });
+      
+      showToast('Ölçütler yüklendi. Lütfen "Kaydet" butonuna basarak onaylayın.', 'success');
+    } catch (err) {
+      showToast('Hata: Yüklenen dosya geçerli bir ölçüt JSON dosyası değil.', 'error');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
 }
 
 function resetOlcutler() {
