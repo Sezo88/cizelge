@@ -1387,6 +1387,13 @@ function applyPdfSelection() {
     if (dersInput) dersInput.value = clsData.ders;
   }
   
+  // Öğretmen adını güncelle (Her sınıfın kendi öğretmeni olabilir)
+  if (clsData.ogretmen && clsData.ogretmen !== "Bilinmeyen Öğretmen") {
+    state.ogretmen = clsData.ogretmen;
+    const ogretmenInput = document.getElementById('ogretmen');
+    if (ogretmenInput) ogretmenInput.value = clsData.ogretmen;
+  }
+  
   // Döneme göre etkinlik notlarını tespit et
   const donemKey = donem === '1' ? 'donem1' : 'donem2';
   

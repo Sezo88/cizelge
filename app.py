@@ -9,12 +9,30 @@ import json
 import os
 import glob
 from datetime import datetime
+import sys
+import webbrowser
+from threading import Timer
 
-app = Flask(__name__)
+# PyInstaller paketleme kontrolü
+IS_FROZEN = getattr(sys, 'frozen', False)
+
+if IS_FROZEN:
+    # Derlenmiş exe içindeki geçici klasör (static ve templates burada olur)
+    bundle_dir = sys._MEIPASS
+    template_folder = os.path.join(bundle_dir, 'templates')
+    static_folder = os.path.join(bundle_dir, 'static')
+    app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+    # Veriler exe'nin çalıştığı dizindeki 'data' klasöründe saklanır
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    app = Flask(__name__)
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 if os.environ.get('VERCEL'):
     DATA_DIR = '/tmp/data'
 else:
-    DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+    DATA_DIR = os.path.join(BASE_DIR, 'data')
+
 os.makedirs(DATA_DIR, exist_ok=True)
 
 
@@ -180,6 +198,20 @@ def parse_pdf():
                 ders_match = re.search(r'DERS\s+YILI\s+(.*?)\s+DERSİ', text)
                 ders_adi_page = ders_match.group(1).strip() if ders_match else "Bilinmeyen Ders"
                 
+                # Öğretmen adını bul (Her sayfa/sınıf için değişebilir)
+                ogretmen_adi_page = metadata.get('ogretmen', "Bilinmeyen Öğretmen")
+                layout_text = page.extract_text(layout=True)
+                if layout_text:
+                    layout_lines = layout_text.split('\n')
+                    for i, l in enumerate(layout_lines):
+                        if 'DERS ÖĞRETMENİ' in l and 'OKUL MÜDÜRÜ' in l:
+                            if i > 0:
+                                prev_line = layout_lines[i-1]
+                                parts = re.split(r'\s{5,}', prev_line.strip())
+                                if len(parts) >= 1 and parts[0].strip():
+                                    ogretmen_adi_page = parts[0].strip()
+                            break
+                
                 tables = page.extract_tables()
                 if not tables: continue
                 
@@ -219,6 +251,7 @@ def parse_pdf():
                     classes_data.append({
                         'sinif': sinif_adi,
                         'ders': ders_adi_page,
+                        'ogretmen': ogretmen_adi_page,
                         'ogrenciler': ogrenciler
                     })
 
@@ -231,9 +264,20 @@ def parse_pdf():
         return jsonify({'hata': str(e)}), 500
 
 
+def open_browser():
+    """Uygulama başladığında tarayıcıyı otomatik açar"""
+    webbrowser.open_new("http://127.0.0.1:5000")
+
+
 if __name__ == '__main__':
     print("=" * 60)
     print("  Ders İçi Etkinlik & Proje Ölçek Uygulaması")
-    print("  Tarayıcınızda açın: http://localhost:5000")
+    print("  Uygulama arka planda çalıştırılıyor...")
+    print("  Tarayıcınız otomatik açılmadıysa şu adrese gidin: http://localhost:5000")
     print("=" * 60)
-    app.run(debug=True, port=5000)
+    
+    # Sadece ana işlemde (reloader çalışmıyorken veya dondurulmuşken) tarayıcıyı aç
+    if IS_FROZEN or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        Timer(1.5, open_browser).start()
+        
+    app.run(host='127.0.0.1', port=5000, debug=not IS_FROZEN)
