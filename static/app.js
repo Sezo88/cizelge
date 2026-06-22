@@ -1552,7 +1552,8 @@ async function downloadAllProjectsPdf() {
     dersAdi: state.dersAdi,
     sinif: state.sinif,
     donem: state.donem,
-    etkinlikSayisi: state.etkinlikSayisi
+    etkinlikSayisi: state.etkinlikSayisi,
+    ogretmen: state.ogretmen
   };
   
   try {
@@ -1560,18 +1561,27 @@ async function downloadAllProjectsPdf() {
     const pageHeight = jspdf.internal.pageSize.getHeight();
     let pageCount = 0;
     
-    // Ders bazında grupla
-    const dersGruplari = {};
+    // Öğretmen ve Ders bazında grupla
+    const gruplar = {};
     
     state.pdfData.classes.forEach(cls => {
       const ders = cls.ders || state.dersAdi || 'Bilinmeyen Ders';
-      if (!dersGruplari[ders]) dersGruplari[ders] = [];
+      const ogretmen = cls.ogretmen || state.ogretmen || 'Bilinmeyen Öğretmen';
+      const grupKey = `${ogretmen}|${ders}`;
+      
+      if (!gruplar[grupKey]) {
+        gruplar[grupKey] = {
+          ogretmen: ogretmen,
+          ders: ders,
+          ogrenciler: []
+        };
+      }
       
       cls.ogrenciler.forEach(ogr => {
         const projeler = ogr[donemKey] || [];
         if (projeler.length > 0) {
           // Öğrencinin proje notu var, gruba ekle
-          dersGruplari[ders].push({
+          gruplar[grupKey].ogrenciler.push({
             no: ogr.no,
             // Sınıf adını isminin sonuna ekle
             ad: ogr.ad + ` (${cls.sinif})`,
@@ -1581,8 +1591,16 @@ async function downloadAllProjectsPdf() {
       });
     });
     
-    const dersler = Object.keys(dersGruplari);
-    if (dersler.length === 0) {
+    const grupKeys = Object.keys(gruplar);
+    let varProjeOgrenci = false;
+    for (const key of grupKeys) {
+      if (gruplar[key].ogrenciler.length > 0) {
+        varProjeOgrenci = true;
+        break;
+      }
+    }
+    
+    if (!varProjeOgrenci) {
       showToast('Seçili dönemde proje notu olan hiçbir öğrenci bulunamadı.', 'error');
       document.body.style.cursor = 'default';
       return;
@@ -1591,11 +1609,13 @@ async function downloadAllProjectsPdf() {
     state.olcekTipi = 'proje';
     state.donem = donem + '. Dönem';
     
-    for (const ders of dersler) {
-      const ogrenciler = dersGruplari[ders];
+    for (const key of grupKeys) {
+      const grup = gruplar[key];
+      const ogrenciler = grup.ogrenciler;
       if (ogrenciler.length === 0) continue;
       
-      state.dersAdi = ders;
+      state.dersAdi = grup.ders;
+      state.ogretmen = grup.ogretmen;
       state.sinif = "Karma Proje Grubu";
       
       // Proje sayısı max 1 veya 2 olabilir
@@ -1683,6 +1703,15 @@ async function downloadAllProjectsPdf() {
     state.sinif = originalState.sinif;
     state.donem = originalState.donem;
     state.etkinlikSayisi = originalState.etkinlikSayisi;
+    state.ogretmen = originalState.ogretmen;
+    
+    // UI inputlarını da geri yükleyelim
+    if (document.getElementById('dersAdi')) document.getElementById('dersAdi').value = state.dersAdi;
+    if (document.getElementById('sinif')) document.getElementById('sinif').value = state.sinif;
+    if (document.getElementById('donem')) document.getElementById('donem').value = state.donem;
+    if (document.getElementById('ogretmen')) document.getElementById('ogretmen').value = state.ogretmen;
+    if (document.getElementById('olcekTipi')) document.getElementById('olcekTipi').value = state.olcekTipi;
+    if (document.getElementById('etkinlikSayisi')) document.getElementById('etkinlikSayisi').value = state.etkinlikSayisi;
     
     document.body.style.cursor = 'default';
     // Görsel tabloyu eski haline döndür
