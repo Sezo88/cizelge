@@ -227,24 +227,34 @@ def parse_pdf():
                     ogrenci_no = str(row[1]).strip()
                     ad_soyad = str(row[2]).strip().replace('\n', ' ')
                     
+                    def is_valid_score(val):
+                        if not val: return False
+                        v = str(val).strip().upper()
+                        return v.isdigit() or v == 'G'
+
+                    def parse_score(val):
+                        v = str(val).strip().upper()
+                        if v.isdigit(): return int(v)
+                        return v
+
                     # 1. Dönem Ders Etkinliklerine Katılım (Sütun 9-13)
-                    donem1_notlar = [row[i] for i in range(9, 14) if row[i] and str(row[i]).strip().isdigit()]
+                    donem1_notlar = [row[i] for i in range(9, 14) if is_valid_score(row[i])]
                     # 2. Dönem Ders Etkinliklerine Katılım (Sütun 21-25)
-                    donem2_notlar = [row[i] for i in range(21, 26) if row[i] and str(row[i]).strip().isdigit()]
+                    donem2_notlar = [row[i] for i in range(21, 26) if is_valid_score(row[i])]
                     
                     # Proje Notları
                     # 1. Dönem Proje (Sütun 7-8)
-                    donem1_proje = [row[i] for i in range(7, 9) if row[i] and str(row[i]).strip().isdigit()]
+                    donem1_proje = [row[i] for i in range(7, 9) if is_valid_score(row[i])]
                     # 2. Dönem Proje (Sütun 19-20)
-                    donem2_proje = [row[i] for i in range(19, 21) if row[i] and str(row[i]).strip().isdigit()]
+                    donem2_proje = [row[i] for i in range(19, 21) if is_valid_score(row[i])]
                     
                     ogrenciler.append({
                         'no': ogrenci_no,
                         'ad': ad_soyad,
-                        'donem1': [int(n) for n in donem1_notlar],
-                        'donem2': [int(n) for n in donem2_notlar],
-                        'donem1_proje': [int(n) for n in donem1_proje],
-                        'donem2_proje': [int(n) for n in donem2_proje]
+                        'donem1': [parse_score(n) for n in donem1_notlar],
+                        'donem2': [parse_score(n) for n in donem2_notlar],
+                        'donem1_proje': [parse_score(n) for n in donem1_proje],
+                        'donem2_proje': [parse_score(n) for n in donem2_proje]
                     })
                 
                 if ogrenciler:

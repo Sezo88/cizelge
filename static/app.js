@@ -358,6 +358,9 @@ function parseEokulFormat(text, etkinlikSayisi) {
 
 // ===== Puan Dağıtım Algoritması =====
 function distributeScores(targetPuan, totalOlcut) {
+  if (targetPuan === 'G' || targetPuan === 'g') {
+    return new Array(totalOlcut).fill(0);
+  }
   if (targetPuan === null || isNaN(targetPuan) || targetPuan <= 0) {
     return new Array(totalOlcut).fill(1);
   }
@@ -402,7 +405,7 @@ function autoDistributeAll() {
 
     state.ogrenciler.forEach((ogr, ogrIdx) => {
       const etNot = ogr.etkinlikNotlari?.[olcekNo - 1];
-      if (etNot != null && etNot > 0) {
+      if (etNot != null && (etNot > 0 || etNot === 'G' || etNot === 'g')) {
         const scores = distributeScores(etNot, totalOlcut);
         state.tumPuanlar[olcekNo][ogrIdx] = {};
         scores.forEach((score, i) => {
@@ -456,7 +459,7 @@ function parseStudentPaste() {
         if (autoDistribute) {
           for (let olcekNo = 1; olcekNo <= etkinlikSayisi; olcekNo++) {
             const etNot = ogr.etkinlikNotlari?.[olcekNo - 1];
-            if (etNot != null && etNot > 0) {
+            if (etNot != null && (etNot > 0 || etNot === 'G' || etNot === 'g')) {
               state.tumPuanlar[olcekNo] = state.tumPuanlar[olcekNo] || {};
               const scores = distributeScores(etNot, totalOlcut);
               state.tumPuanlar[olcekNo][ogrIdx] = {};
@@ -639,9 +642,10 @@ function renderOlcekTable() {
 
     olcutler.kategoriler.forEach(kat => {
       kat.olcutler.forEach(() => {
-        const score = state.puanlar[ogrIdx]?.[globalOlcutIdx] || '';
-        if (score) {
-          totalPuan += score;
+        let score = state.puanlar[ogrIdx]?.[globalOlcutIdx];
+        if (score === undefined) score = '';
+        if (score !== '') {
+          totalPuan += Number(score);
           totalFilled++;
         }
         html += `<td class="score-cell" data-ogr="${ogrIdx}" data-olcut="${globalOlcutIdx}" 
@@ -652,9 +656,12 @@ function renderOlcekTable() {
 
     const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
     const maxPuan = totalOlcutler * maxScore;
-    const yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
-
-    html += `<td class="score-total">${yuzde}</td></tr>`;
+    let yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
+    let allZeros = totalFilled === totalOlcutler && totalPuan === 0;
+    if (totalFilled > 0 && allZeros) yuzde = 'GETİRMEDİ';
+    
+    let fontSize = yuzde === 'GETİRMEDİ' ? '0.7rem' : 'inherit';
+    html += `<td class="score-total" style="font-size:${fontSize}">${yuzde}</td></tr>`;
   });
 
   html += `</tbody></table></div>`;
@@ -731,18 +738,25 @@ function updateRowTotal(ogrIdx) {
   let totalPuan = 0;
   let totalFilled = 0;
   Object.values(puanlar).forEach(p => {
-    totalPuan += p;
-    totalFilled++;
+    if (p !== '' && p !== null && p !== undefined) {
+      totalPuan += Number(p);
+      totalFilled++;
+    }
   });
 
   const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
   const maxPuan = totalOlcutler * maxScore;
-  const yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
+  let yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
+  let allZeros = totalFilled === totalOlcutler && totalPuan === 0;
+  if (totalFilled > 0 && allZeros) yuzde = 'GETİRMEDİ';
 
   const rows = document.querySelectorAll('#scaleTable tbody tr');
   if (rows[ogrIdx]) {
     const lastCell = rows[ogrIdx].querySelector('.score-total');
-    if (lastCell) lastCell.textContent = yuzde;
+    if (lastCell) {
+      lastCell.textContent = yuzde;
+      lastCell.style.fontSize = yuzde === 'GETİRMEDİ' ? '0.7rem' : 'inherit';
+    }
   }
 
   const filledCount = Object.values(state.puanlar).reduce((sum, ogr) => {
@@ -859,9 +873,10 @@ function buildPdfPageHtml(olcekNo, puanlarData) {
 
     olcutler.kategoriler.forEach(kat => {
       kat.olcutler.forEach(() => {
-        const score = puanlarData[ogrIdx]?.[globalOlcutIdx] || '';
-        if (score) {
-          totalPuan += score;
+        let score = puanlarData[ogrIdx]?.[globalOlcutIdx];
+        if (score === undefined) score = '';
+        if (score !== '') {
+          totalPuan += Number(score);
           totalFilled++;
         }
         html += `<td>${score}</td>`;
@@ -871,8 +886,12 @@ function buildPdfPageHtml(olcekNo, puanlarData) {
 
     const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
     const maxPuan = totalOlcutler * maxScore;
-    const yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
-    html += `<td style="font-weight:700">${yuzde}</td></tr>`;
+    let yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
+    let allZeros = totalFilled === totalOlcutler && totalPuan === 0;
+    if (totalFilled > 0 && allZeros) yuzde = 'GETİRMEDİ';
+    
+    let fontSize = yuzde === 'GETİRMEDİ' ? '6.5pt' : 'inherit';
+    html += `<td style="font-weight:700; font-size:${fontSize}">${yuzde}</td></tr>`;
   });
 
   html += `</tbody></table>
@@ -1427,7 +1446,7 @@ function applyPdfSelection() {
     const scores = ogr[donemKey] || [];
     scores.forEach((score, scoreIdx) => {
       const olcekPage = scoreIdx + 1;
-      if (olcekPage <= 3 && score != null && score > 0) { // Maksimum 3 sayfa destekleniyor
+      if (olcekPage <= 3 && score != null && (score > 0 || score === 'G' || score === 'g')) { // Maksimum 3 sayfa destekleniyor
         const distributedScores = distributeScores(score, totalOlcut);
         state.tumPuanlar[olcekPage] = state.tumPuanlar[olcekPage] || {};
         state.tumPuanlar[olcekPage][idx] = {};
@@ -1634,7 +1653,7 @@ async function downloadAllProjectsPdf() {
         state.ogrenciler.forEach((ogr, idx) => {
           ogr.etkinlikNotlari.forEach((score, scoreIdx) => {
             const olcekPage = scoreIdx + 1;
-            if (olcekPage <= 3 && score != null && score > 0) {
+            if (olcekPage <= 3 && score != null && (score > 0 || score === 'G' || score === 'g')) {
               const distributedScores = distributeScores(score, totalOlcut);
               state.tumPuanlar[olcekPage] = state.tumPuanlar[olcekPage] || {};
               state.tumPuanlar[olcekPage][idx] = {};
