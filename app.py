@@ -21,12 +21,17 @@ if IS_FROZEN:
     bundle_dir = sys._MEIPASS
     template_folder = os.path.join(bundle_dir, 'templates')
     static_folder = os.path.join(bundle_dir, 'static')
-    app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
-    # Veriler exe'nin çalıştığı dizindeki 'data' klasöründe saklanır
     BASE_DIR = os.path.dirname(sys.executable)
 else:
-    app = Flask(__name__)
+    template_folder = None
+    static_folder = None
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Vercel'in top-level olarak bulabilmesi için app'i koşuldan bağımsız tanımla
+if template_folder and static_folder:
+    app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+else:
+    app = Flask(__name__)
 
 if os.environ.get('VERCEL'):
     DATA_DIR = '/tmp/data'
