@@ -359,7 +359,7 @@ function parseEokulFormat(text, etkinlikSayisi) {
 // ===== Puan Dağıtım Algoritması =====
 function distributeScores(targetPuan, totalOlcut) {
   if (targetPuan === 'G' || targetPuan === 'g') {
-    return new Array(totalOlcut).fill(0);
+    return null; // Getirmedi işareti
   }
   if (targetPuan === null || isNaN(targetPuan) || targetPuan <= 0) {
     return new Array(totalOlcut).fill(1);
@@ -407,10 +407,14 @@ function autoDistributeAll() {
       const etNot = ogr.etkinlikNotlari?.[olcekNo - 1];
       if (etNot != null && (etNot > 0 || etNot === 'G' || etNot === 'g')) {
         const scores = distributeScores(etNot, totalOlcut);
-        state.tumPuanlar[olcekNo][ogrIdx] = {};
-        scores.forEach((score, i) => {
-          state.tumPuanlar[olcekNo][ogrIdx][i] = score;
-        });
+        if (scores === null) {
+          state.tumPuanlar[olcekNo][ogrIdx] = { _getirmedi: true };
+        } else {
+          state.tumPuanlar[olcekNo][ogrIdx] = {};
+          scores.forEach((score, i) => {
+            state.tumPuanlar[olcekNo][ogrIdx][i] = score;
+          });
+        }
         distributed++;
       }
     });
@@ -462,10 +466,14 @@ function parseStudentPaste() {
             if (etNot != null && (etNot > 0 || etNot === 'G' || etNot === 'g')) {
               state.tumPuanlar[olcekNo] = state.tumPuanlar[olcekNo] || {};
               const scores = distributeScores(etNot, totalOlcut);
-              state.tumPuanlar[olcekNo][ogrIdx] = {};
-              scores.forEach((score, i) => {
-                state.tumPuanlar[olcekNo][ogrIdx][i] = score;
-              });
+              if (scores === null) {
+                state.tumPuanlar[olcekNo][ogrIdx] = { _getirmedi: true };
+              } else {
+                state.tumPuanlar[olcekNo][ogrIdx] = {};
+                scores.forEach((score, i) => {
+                  state.tumPuanlar[olcekNo][ogrIdx][i] = score;
+                });
+              }
             }
           }
         }
@@ -636,17 +644,21 @@ function renderOlcekTable() {
         <td class="student-name-cell" title="${ogr.ad} ${etNotLabel}">${ogr.ad}</td>
     `;
 
+    const isGetirmedi = state.puanlar[ogrIdx]?._getirmedi === true;
     let totalPuan = 0;
     let totalFilled = 0;
     let globalOlcutIdx = 0;
 
     olcutler.kategoriler.forEach(kat => {
       kat.olcutler.forEach(() => {
-        let score = state.puanlar[ogrIdx]?.[globalOlcutIdx];
-        if (score === undefined) score = '';
-        if (score !== '') {
-          totalPuan += Number(score);
-          totalFilled++;
+        let score = '';
+        if (!isGetirmedi) {
+          score = state.puanlar[ogrIdx]?.[globalOlcutIdx];
+          if (score === undefined) score = '';
+          if (score !== '') {
+            totalPuan += Number(score);
+            totalFilled++;
+          }
         }
         html += `<td class="score-cell" data-ogr="${ogrIdx}" data-olcut="${globalOlcutIdx}" 
                      data-score="${score}" onclick="handleScoreClick(this)">${score}</td>`;
@@ -654,11 +666,14 @@ function renderOlcekTable() {
       });
     });
 
-    const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
-    const maxPuan = totalOlcutler * maxScore;
-    let yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
-    let allZeros = totalFilled === totalOlcutler && totalPuan === 0;
-    if (totalFilled > 0 && allZeros) yuzde = 'GETİRMEDİ';
+    let yuzde;
+    if (isGetirmedi) {
+      yuzde = 'GETİRMEDİ';
+    } else {
+      const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
+      const maxPuan = totalOlcutler * maxScore;
+      yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
+    }
     
     let fontSize = yuzde === 'GETİRMEDİ' ? '0.7rem' : 'inherit';
     html += `<td class="score-total" style="font-size:${fontSize}">${yuzde}</td></tr>`;
@@ -734,21 +749,24 @@ function handleScoreClick(cell) {
 function updateRowTotal(ogrIdx) {
   const totalOlcutler = getTotalOlcutCount();
   const puanlar = state.puanlar[ogrIdx] || {};
+  const isGetirmedi = puanlar._getirmedi === true;
 
-  let totalPuan = 0;
-  let totalFilled = 0;
-  Object.values(puanlar).forEach(p => {
-    if (p !== '' && p !== null && p !== undefined) {
-      totalPuan += Number(p);
-      totalFilled++;
-    }
-  });
-
-  const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
-  const maxPuan = totalOlcutler * maxScore;
-  let yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
-  let allZeros = totalFilled === totalOlcutler && totalPuan === 0;
-  if (totalFilled > 0 && allZeros) yuzde = 'GETİRMEDİ';
+  let yuzde;
+  if (isGetirmedi) {
+    yuzde = 'GETİRMEDİ';
+  } else {
+    let totalPuan = 0;
+    let totalFilled = 0;
+    Object.values(puanlar).forEach(p => {
+      if (p !== '' && p !== null && p !== undefined) {
+        totalPuan += Number(p);
+        totalFilled++;
+      }
+    });
+    const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
+    const maxPuan = totalOlcutler * maxScore;
+    yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
+  }
 
   const rows = document.querySelectorAll('#scaleTable tbody tr');
   if (rows[ogrIdx]) {
@@ -867,28 +885,35 @@ function buildPdfPageHtml(olcekNo, puanlarData) {
       <td>${ogr.no}</td>
       <td class="student-name">${ogr.ad}</td>`;
 
+    const isGetirmedi = puanlarData[ogrIdx]?._getirmedi === true;
     let totalPuan = 0;
     let totalFilled = 0;
     let globalOlcutIdx = 0;
 
     olcutler.kategoriler.forEach(kat => {
       kat.olcutler.forEach(() => {
-        let score = puanlarData[ogrIdx]?.[globalOlcutIdx];
-        if (score === undefined) score = '';
-        if (score !== '') {
-          totalPuan += Number(score);
-          totalFilled++;
+        let score = '';
+        if (!isGetirmedi) {
+          score = puanlarData[ogrIdx]?.[globalOlcutIdx];
+          if (score === undefined) score = '';
+          if (score !== '') {
+            totalPuan += Number(score);
+            totalFilled++;
+          }
         }
         html += `<td>${score}</td>`;
         globalOlcutIdx++;
       });
     });
 
-    const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
-    const maxPuan = totalOlcutler * maxScore;
-    let yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
-    let allZeros = totalFilled === totalOlcutler && totalPuan === 0;
-    if (totalFilled > 0 && allZeros) yuzde = 'GETİRMEDİ';
+    let yuzde;
+    if (isGetirmedi) {
+      yuzde = 'GETİRMEDİ';
+    } else {
+      const maxScore = state.olcekTipi === 'proje' ? 10 : 5;
+      const maxPuan = totalOlcutler * maxScore;
+      yuzde = totalFilled > 0 ? Math.round((totalPuan / maxPuan) * 100) : 0;
+    }
     
     let fontSize = yuzde === 'GETİRMEDİ' ? '6.5pt' : 'inherit';
     html += `<td style="font-weight:700; font-size:${fontSize}">${yuzde}</td></tr>`;
@@ -1449,10 +1474,14 @@ function applyPdfSelection() {
       if (olcekPage <= 3 && score != null && (score > 0 || score === 'G' || score === 'g')) { // Maksimum 3 sayfa destekleniyor
         const distributedScores = distributeScores(score, totalOlcut);
         state.tumPuanlar[olcekPage] = state.tumPuanlar[olcekPage] || {};
-        state.tumPuanlar[olcekPage][idx] = {};
-        distributedScores.forEach((s, i) => {
-          state.tumPuanlar[olcekPage][idx][i] = s;
-        });
+        if (distributedScores === null) {
+          state.tumPuanlar[olcekPage][idx] = { _getirmedi: true };
+        } else {
+          state.tumPuanlar[olcekPage][idx] = {};
+          distributedScores.forEach((s, i) => {
+            state.tumPuanlar[olcekPage][idx][i] = s;
+          });
+        }
       }
     });
   });
@@ -1656,10 +1685,14 @@ async function downloadAllProjectsPdf() {
             if (olcekPage <= 3 && score != null && (score > 0 || score === 'G' || score === 'g')) {
               const distributedScores = distributeScores(score, totalOlcut);
               state.tumPuanlar[olcekPage] = state.tumPuanlar[olcekPage] || {};
-              state.tumPuanlar[olcekPage][idx] = {};
-              distributedScores.forEach((s, idx2) => {
-                state.tumPuanlar[olcekPage][idx][idx2] = s;
-              });
+              if (distributedScores === null) {
+                state.tumPuanlar[olcekPage][idx] = { _getirmedi: true };
+              } else {
+                state.tumPuanlar[olcekPage][idx] = {};
+                distributedScores.forEach((s, idx2) => {
+                  state.tumPuanlar[olcekPage][idx][idx2] = s;
+                });
+              }
             }
           });
         });
