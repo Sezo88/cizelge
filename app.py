@@ -16,22 +16,16 @@ from threading import Timer
 # PyInstaller paketleme kontrolü
 IS_FROZEN = getattr(sys, 'frozen', False)
 
+# Vercel'in bulabilmesi için app her zaman koşulsuz top-level olarak tanımlanır
+app = Flask(__name__)
+
 if IS_FROZEN:
-    # Derlenmiş exe içindeki geçici klasör (static ve templates burada olur)
     bundle_dir = sys._MEIPASS
-    template_folder = os.path.join(bundle_dir, 'templates')
-    static_folder = os.path.join(bundle_dir, 'static')
+    app.template_folder = os.path.join(bundle_dir, 'templates')
+    app.static_folder = os.path.join(bundle_dir, 'static')
     BASE_DIR = os.path.dirname(sys.executable)
 else:
-    template_folder = None
-    static_folder = None
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Vercel'in top-level olarak bulabilmesi için app'i koşuldan bağımsız tanımla
-if template_folder and static_folder:
-    app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
-else:
-    app = Flask(__name__)
 
 if os.environ.get('VERCEL'):
     DATA_DIR = '/tmp/data'
